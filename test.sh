@@ -12,9 +12,12 @@ COLOR_RED=`tput setaf 1`
 COLOR_GREEN=`tput setaf 2`
 COLOR_NO=`tput sgr0`
 
-if [ -f .config ]; then
-	. .config
+if [ ! -f .config ]; then
+	echo "Please set the runtime configuration."
+	./config.sh
 fi
+
+. .config
 
 if [ ! -z "$DEBUG" ]; then
 	set -x
@@ -175,7 +178,7 @@ else
 fi
 
 while true; do
-	read -n 1 -p "Press s to shutdown. Press r to reboot. Press t to re-test." KEY
+	read -n 1 -p "Press s to shutdown. Press r to reboot. Press t to re-test. Press c to go to configuration." KEY
 	echo ""
 	KEY=${KEY,,}
 	if [ "$KEY" = "s" ]; then
@@ -184,6 +187,8 @@ while true; do
 		reboot
 	elif [ "$KEY" = "t" ]; then
 		break
+	elif [ "$KEY" = "c" ]; then
+		./config.sh
 	fi
 done
 
