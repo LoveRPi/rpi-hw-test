@@ -17,26 +17,31 @@ if [ ! -f .config ]; then
 	./config.sh
 fi
 
-. .config
+. config-keys.sh
 
-if [ ! -z "$DEBUG" ]; then
-	set -x
-fi
+while true; do
+	. .config
 
-if [ -z "$IPERF_IP" ]; then
-	echo "Please specify IPERF_IP."
-	exit 1
-fi
+	if [ ! -z "$DEBUG" ]; then
+		set -x
+	fi
+	
+	CONFIG_OK=1
 
-if [ -z "$WIFI_NAME" ]; then
-	echo "Please specify WIFI_NAME."
-	exit 1
-fi
+	for key in "${CONFIGS[@]}"; do
+		if [ -z "${!key}" ]; then
+			echo "$key is a mandatory field."
+			CONFIG_OK=0
+			break
+		fi
+	done
 
-if [ -z "$WIFI_PASS" ]; then
-	echo "Please specify WIFI_PASS."
-	exit 1
-fi
+	if [ "$CONFIG_OK" -eq 1 ]; then
+		break
+	fi
+	
+	./config.sh
+done
 
 function finish {
 	pkill cpuburn-a53
