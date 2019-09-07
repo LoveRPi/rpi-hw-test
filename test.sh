@@ -104,7 +104,7 @@ if [ -z "$ETH" ]; then
 else
 	echo -n " $ETH..."
 	nmcli device connect $ETH > /dev/null
-	ETH_STATE=`cat /sys/class/net/en*/operstate`
+	ETH_STATE=`cat /sys/class/net/e*/operstate`
 	if [ "$ETH_STATE" = "up" ]; then
 		if [ -z "$IPERF_PORT" ]; then
 			IPERF_RESULT=`iperf -x CMSV -y C -c $IPERF_IP 2> /dev/null`
