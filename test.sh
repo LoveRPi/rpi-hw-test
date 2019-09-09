@@ -77,6 +77,7 @@ case "$PI_REV" in
 	a52082)
 		PI_VER=3B
 		echo "${COLOR_RED}Raspberry Pi 3 Model B 1.2 Manufactured by Stadium${COLOR_NO}"
+		;;
 	*)
 		PI_VER=UNKNOWN
 		echo "${COLOR_RED}Unable to determine Raspberry Pi code.${COLOR_NO}"
