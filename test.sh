@@ -160,7 +160,7 @@ if [ -z "$ETH" ]; then
 	echo "...${COLOR_RED}NOT FOUND!${COLOR_NO}"
 else
 	echo -n " $ETH..."
-	nmcli device connect $ETH > /dev/null 2>&1
+	nmcli device connect $ETH > /dev/null 2>&1 || true
 	ETH_STATE=`cat /sys/class/net/e*/operstate`
 	if [ "$ETH_STATE" = "up" ]; then
 		if [ -z "$IPERF_PORT" ]; then
@@ -191,7 +191,7 @@ else
 fi
 
 echo -n "Testing WiFi Signal..."
-#nmcli radio wifi on > /dev/null 2>&1
+#nmcli radio wifi on > /dev/null 2>&1 || true
 WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\s*$WIFI_NAME\s" || true`"
 if [ -z "$WIFI_NETS" ]; then
 	echo "${COLO_RED}NO WIRELESS NET${COLOR_NO}"
@@ -199,8 +199,8 @@ else
 	echo -n "${COLOR_GREEN}OK${COLOR_NO} "
 	echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-
 	echo -n "Testing WiFi..."
-	nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1
-	WIFI_STATUS="`nmcli device show wlan0 2> /dev/null`"
+	nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
+	WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
 	WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100`"
 	if [ -z "$WIFI_STATE" ]; then
 		echo "${COLOR_RED}NO WIRELESS CONNECTION${COLOR_NO}"
@@ -208,7 +208,7 @@ else
 		WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2 -d ' '`"
 		WIFI_IPV4="`echo "$WIFI_STATUS" | grep "IP4.ADDRESS" | tr -s ' ' | cut -f 2 -d ' '`"
 		if [ ! -z "$ETH" ]; then
-			nmcli device disconnect $ETH > /dev/null 2>&1
+			nmcli device disconnect $ETH > /dev/null 2>&1 || true
 		fi
 		if [ -z "$IPERF_PORT" ]; then
 			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -c $IPERF_IP 2> /dev/null`
@@ -227,7 +227,7 @@ else
 				echo "${COLOR_RED}LOW ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
 			fi
 		fi
-		nmcli connection delete id $WIFI_CONNECTION > /dev/null 2>&1
+		nmcli connection delete id $WIFI_CONNECTION > /dev/null 2>&1 || true
 	fi
 fi
 
