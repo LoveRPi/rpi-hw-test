@@ -52,19 +52,34 @@ PI_REV=`grep Revision /proc/cpuinfo | cut -f 2 -d ' '`
 case "$PI_REV" in
 	a03111 | b03111 | c03111)
 		PI_VER=4B
-		echo "Raspberry Pi 4 Model B Detected"
+		echo "${COLOR_GREEN}Raspberry Pi 4 Model B 1.1 Manufactured by Sony UK${COLOR_NO}"
 		;;
 	a020d3)
 		PI_VER=3BP
-		echo "Raspberry Pi 3 Model B+ Detected"
+		echo "${COLOR_GREEN}Raspberry Pi 3 Model B+ 1.3 Manufactured by Sony UK${COLOR_NO}"
 		;;
-	a02082 | a22082 | a32082 | a52082 | a22083)
+	a02082)
 		PI_VER=3B
-		echo "Raspberry Pi 3 Model B Detected"
+		echo "${COLOR_RED}Raspberry Pi 3 Model B 1.2 Manufactured by Sony UK${COLOR_NO}"
 		;;
+	a22082)
+		PI_VER=3B
+		echo "${COLOR_GREEN}Raspberry Pi 3 Model B 1.2 Manufactured by Embest${COLOR_NO}"
+		;;
+	a22083)
+		PI_VER=3B
+		echo "${COLOR_GREEN}Raspberry Pi 3 Model B 1.3 Manufactured by Embest${COLOR_NO}"
+		;;
+	a32082)
+		PI_VER=3B
+		echo "${COLOR_RED}Raspberry Pi 3 Model B 1.2 Manufactured by Sony Japan${COLOR_NO}"
+		;;
+	a52082)
+		PI_VER=3B
+		echo "${COLOR_RED}Raspberry Pi 3 Model B 1.2 Manufactured by Stadium${COLOR_NO}"
 	*)
 		PI_VER=UNKNOWN
-		echo "Unable to determine Raspberry Pi code."
+		echo "${COLOR_RED}Unable to determine Raspberry Pi code.${COLOR_NO}"
 		sleep infinity
 		;;
 esac
