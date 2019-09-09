@@ -127,13 +127,13 @@ trap - EXIT
 
 echo -n "Testing HDMI..."
 if [ "$PI_VER" = "4B" ]; then
-	#HDMI_STATUS=`cat /sys/class/drm/card0/card0-HDMI-A-1/status`
-	#HDMI_ENABLED=`cat /sys/class/drm/card0/card0-HDMI-A-1/enabled`
-	HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
-else
 	#HDMI_STATUS=`cat /sys/class/drm/card1/card1-HDMI-A-1/status`
 	#HDMI_ENABLED=`cat /sys/class/drm/card1/card1-HDMI-A-1/enabled`
 	HDMI_MODES_SYS_FILE=/sys/class/drm/card1/card1-HDMI-A-1/modes
+else
+	#HDMI_STATUS=`cat /sys/class/drm/card0/card0-HDMI-A-1/status`
+	#HDMI_ENABLED=`cat /sys/class/drm/card0/card0-HDMI-A-1/enabled`
+	HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
 fi
 if [ ! -e $HDMI_MODES_SYS_FILE ]; then
 	echo "${COLOR_RED}NOT FOUND!${COLOR_NO}"
