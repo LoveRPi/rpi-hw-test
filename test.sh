@@ -52,12 +52,15 @@ PI_REV=`grep Revision /proc/cpuinfo | cut -f 2 -d ' '`
 case "$PI_REV" in
 	a03111 | b03111 | c03111)
 		PI_VER=4B
+		echo "Raspberry Pi 4 Model B Detected"
 		;;
 	a020d3)
 		PI_VER=3BP
+		echo "Raspberry Pi 3 Model B+ Detected"
 		;;
 	a02082 | a22082 | a32082 | a52082 | a22083)
 		PI_VER=3B
+		echo "Raspberry Pi 3 Model B Detected"
 		;;
 	*)
 		PI_VER=UNKNOWN
