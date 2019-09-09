@@ -211,17 +211,18 @@ fi
 
 echo -n "Testing WiFi Signal..."
 #nmcli radio wifi on > /dev/null 2>&1 || true
-WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\s*$WIFI_NAME\s" || true`"
+WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\\*\?\s*$WIFI_NAME\s" || true`"
 if [ -z "$WIFI_NETS" ]; then
 	echo "${COLOR_RED}NO WIRELESS NET${COLOR_NO}"
 else
 	echo -n "${COLOR_GREEN}OK${COLOR_NO} "
 	echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-
 	echo -n "Testing WiFi..."
+	nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
 	nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
 	WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
 	WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
-	WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2- -d ' '`"
+	#WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2- -d ' '`"
 	if [ -z "$WIFI_STATE" ]; then
 		echo "${COLOR_RED}NO WIRELESS CONNECTION${COLOR_NO}"
 	else
@@ -234,6 +235,7 @@ else
 		else
 			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
 		fi
+		nmcli device disconnect wlan0 > /dev/null 2>&1 || true
 		IPERF_WIRELESS_RESULT_SUCCESS=`echo "$IPERF_WIRELESS_RESULT" | grep ^20 || true`
 		if [ -z "$IPERF_WIRELESS_RESULT_SUCCESS" ]; then
 			echo "${COLOR_RED}IPERF FAILED${COLOR_NO}"
@@ -247,12 +249,12 @@ else
 			fi
 		fi
 	fi
-	nmcli connection delete id "$WIFI_CONNECTION" > /dev/null 2>&1 || true
+	nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
 fi
 
 while true; do
 	read -n 1 -p "Press s to shutdown. Press r to reboot. Press t to re-test. Press c to go to configuration." KEY
-	echo ""
+	echo -e "\b "
 	KEY=${KEY,,}
 	if [ "$KEY" = "s" ]; then
 		shutdown -P now
