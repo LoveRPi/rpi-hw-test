@@ -218,7 +218,7 @@ else
 		else
 			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
 		fi
-		IPERF_WIRELESS_RESULT_SUCCESS=`echo $IPERF_WIRELESS_RESULT | grep ^20 || true`
+		IPERF_WIRELESS_RESULT_SUCCESS=`echo "$IPERF_WIRELESS_RESULT" | grep ^20 || true`
 		if [ -z "$IPERF_WIRELESS_RESULT_SUCCESS" ]; then
 			echo "${COLOR_RED}IPERF FAILED${COLOR_NO}"
 		else
@@ -230,7 +230,7 @@ else
 				echo "${COLOR_RED}LOW ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
 			fi
 		fi
-		nmcli connection delete id $WIFI_CONNECTION > /dev/null 2>&1 || true
+		nmcli connection delete id "$WIFI_CONNECTION" > /dev/null 2>&1 || true
 	fi
 fi
 
