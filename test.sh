@@ -181,7 +181,7 @@ else
 			fi
 		fi
 	else
-		ETH_LINK=`cat /sys/class/net/en*/carrier`
+		ETH_LINK=`cat /sys/class/net/e*/carrier`
 		if [ "$ETH_LINK" -eq 0 ]; then
 			echo "${COLOR_RED}NO LINK${COLOR_NO}"
 		else
