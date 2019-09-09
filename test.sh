@@ -224,7 +224,7 @@ else
 	if [ -z "$WIFI_STATE" ]; then
 		echo "${COLOR_RED}NO WIRELESS CONNECTION${COLOR_NO}"
 	else
-		WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2 -d ' '`"
+		WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2- -d ' '`"
 		WIFI_IPV4="`echo "$WIFI_STATUS" | grep "IP4.ADDRESS" | tr -s ' ' | cut -f 2 -d ' '`"
 		if [ ! -z "$ETH" ]; then
 			nmcli device disconnect $ETH > /dev/null 2>&1 || true
