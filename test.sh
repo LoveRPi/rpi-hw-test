@@ -197,7 +197,7 @@ echo -n "Testing WiFi Signal..."
 #nmcli radio wifi on > /dev/null 2>&1 || true
 WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\s*$WIFI_NAME\s" || true`"
 if [ -z "$WIFI_NETS" ]; then
-	echo "${COLO_RED}NO WIRELESS NET${COLOR_NO}"
+	echo "${COLOR_RED}NO WIRELESS NET${COLOR_NO}"
 else
 	echo -n "${COLOR_GREEN}OK${COLOR_NO} "
 	echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-
