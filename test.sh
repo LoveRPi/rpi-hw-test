@@ -221,10 +221,10 @@ else
 	nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
 	WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
 	WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
+	WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2- -d ' '`"
 	if [ -z "$WIFI_STATE" ]; then
 		echo "${COLOR_RED}NO WIRELESS CONNECTION${COLOR_NO}"
 	else
-		WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2- -d ' '`"
 		WIFI_IPV4="`echo "$WIFI_STATUS" | grep "IP4.ADDRESS" | tr -s ' ' | cut -f 2 -d ' '`"
 		if [ ! -z "$ETH" ]; then
 			nmcli device disconnect $ETH > /dev/null 2>&1 || true
@@ -246,8 +246,8 @@ else
 				echo "${COLOR_RED}LOW ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
 			fi
 		fi
-		nmcli connection delete id "$WIFI_CONNECTION" > /dev/null 2>&1 || true
 	fi
+	nmcli connection delete id "$WIFI_CONNECTION" > /dev/null 2>&1 || true
 fi
 
 while true; do
