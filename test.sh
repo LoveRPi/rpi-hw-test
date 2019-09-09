@@ -5,14 +5,13 @@ set -e
 SOURCE_DIR=$(readlink -f $(dirname ${BASH_SOURCE[0]}))
 cd $SOURCE_DIR
 
-IPERF_SPEED_LOW=250
-IPERF_WIRELESS_SPEED_LOW=50
 
 COLOR_RED=`tput setaf 1`
 COLOR_GREEN=`tput setaf 2`
 COLOR_NO=`tput sgr0`
 
 if [ ! -f .config ]; then
+	sleep 5
 	echo "Please set the runtime configuration."
 	./config.sh
 fi
@@ -49,6 +48,43 @@ function finish {
 }
 trap finish EXIT
 
+PI_REV=`grep Revision /proc/cpuinfo | cut -f 2 -d ' '`
+case "$PI_REV" in
+	a03111 | b03111 | c03111)
+		PI_VER=4B
+		;;
+	a020d3)
+		PI_VER=3BP
+		;;
+	a02082 | a22082 | a32082 | a52082 | a22083)
+		PI_VER=3B
+		;;
+	*)
+		PI_VER=UNKNOWN
+		echo "Unable to determine Raspberry Pi code."
+		sleep infinity
+		;;
+esac
+
+if [ -z "$IPERF_SPEED_LOW" ]; then
+	if [ "$PI_VER" = "3B" ]; then
+		IPERF_SPEED_LOW=90
+	elif [ "$PI_VER" = "3BP" ]; then
+		IPERF_SPEED_LOW=250
+	elif [ "$PI_VER" = "4B" ]; then
+		IPERF_SPEED_LOW=900
+	fi
+fi
+
+if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
+	if [ "$PI_VER" = "3B" ]; then
+		IPERF_WIRELESS_SPEED_LOW=25
+	elif [ "$PI_VER" = "3BP" ]; then
+		IPERF_WIRELESS_SPEED_LOW=50
+	elif [ "$PI_VER" = "4B" ]; then
+		IPERF_WIRELESS_SPEED_LOW=50
+	fi
+fi
 
 bin/cpuburn-a53 &
 
@@ -56,7 +92,11 @@ echo -n "Running GPU: "
 
 (sleep 10 && pkill kmscube) &
 
-kmscube > /dev/null 2>&1 || true
+if [ "$PI_VER" = "4B" ]; then
+	kmscube -D /dev/dri/card1 > /dev/null 2>&1 || true
+else
+	kmscube > /dev/null 2>&1 || true
+fi
 
 echo -n "Testing Voltage..."
 
@@ -86,14 +126,23 @@ pkill cpuburn-a53
 trap - EXIT
 
 echo -n "Testing HDMI..."
-#HDMI_STATUS=`cat /sys/class/drm/card0/card0-HDMI-A-1/status`
-#HDMI_ENABLED=`cat /sys/class/drm/card0/card0-HDMI-A-1/enabled`
-HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
+if [ "$PI_VER" = "4B" ]; then
+	#HDMI_STATUS=`cat /sys/class/drm/card0/card0-HDMI-A-1/status`
+	#HDMI_ENABLED=`cat /sys/class/drm/card0/card0-HDMI-A-1/enabled`
+	HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
+else
+	#HDMI_STATUS=`cat /sys/class/drm/card1/card1-HDMI-A-1/status`
+	#HDMI_ENABLED=`cat /sys/class/drm/card1/card1-HDMI-A-1/enabled`
+	HDMI_MODES_SYS_FILE=/sys/class/drm/card1/card1-HDMI-A-1/modes
+fi
 if [ ! -e $HDMI_MODES_SYS_FILE ]; then
 	echo "${COLOR_RED}NOT FOUND!${COLOR_NO}"
 else
-	HDMI_MODE_TARGET=`cat $HDMI_MODES_SYS_FILE | grep 1920x1080`
-
+	if [ "$PI_VER" = "4B" ]; then
+		HDMI_MODE_TARGET=`cat $HDMI_MODES_SYS_FILE | grep 3840x2160`
+	else
+		HDMI_MODE_TARGET=`cat $HDMI_MODES_SYS_FILE | grep 1920x1080`
+	fi
 	if [ -z "$HDMI_MODE_TARGET" ]; then
 		echo "${COLOR_RED}LOW `head -n 1 $HDMI_MODE_SYS_FILE`${COLOR_NO}"
 	else
