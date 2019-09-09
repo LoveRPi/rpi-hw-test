@@ -220,7 +220,7 @@ else
 	echo -n "Testing WiFi..."
 	nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
 	WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
-	WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100`"
+	WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
 	if [ -z "$WIFI_STATE" ]; then
 		echo "${COLOR_RED}NO WIRELESS CONNECTION${COLOR_NO}"
 	else
