@@ -214,9 +214,9 @@ else
 			nmcli device disconnect $ETH > /dev/null 2>&1 || true
 		fi
 		if [ -z "$IPERF_PORT" ]; then
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -c $IPERF_IP 2> /dev/null`
+			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -c $IPERF_IP 2> /dev/null || true`
 		else
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -c $IPERF_IP -p $IPERF_PORT 2> /dev/null`
+			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
 		fi
 		IPERF_WIRELESS_RESULT_SUCCESS=`echo $IPERF_WIRELESS_RESULT | grep ^20 || true`
 		if [ -z "$IPERF_WIRELESS_RESULT_SUCCESS" ]; then
