@@ -54,6 +54,14 @@ case "$PI_REV" in
 		PI_VER=4B
 		echo "${COLOR_GREEN}Raspberry Pi 4 Model B 1.1 Manufactured by Sony UK${COLOR_NO}"
 		;;
+	b03112 | c03112)
+		PI_VER=4B
+		echo "${COLOR_GREEN}Raspberry Pi 4 Model B 1.2 Manufactured by Sony UK${COLOR_NO}"
+		;;
+	d03114)
+		PI_VER=4B
+		echo "${COLOR_GREEN}Raspberry Pi 4 Model B 1.4 Manufactured by Sony UK${COLOR_NO}"
+		;;
 	a020d3)
 		PI_VER=3BP
 		echo "${COLOR_GREEN}Raspberry Pi 3 Model B+ 1.3 Manufactured by Sony UK${COLOR_NO}"
@@ -101,7 +109,7 @@ if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
 	elif [ "$PI_VER" = "3BP" ]; then
 		IPERF_WIRELESS_SPEED_LOW=50
 	elif [ "$PI_VER" = "4B" ]; then
-		IPERF_WIRELESS_SPEED_LOW=50
+		IPERF_WIRELESS_SPEED_LOW=100
 	fi
 fi
 
