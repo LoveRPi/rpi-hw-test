@@ -99,7 +99,7 @@ if [ -z "$IPERF_SPEED_LOW" ]; then
 	elif [ "$PI_VER" = "3BP" ]; then
 		IPERF_SPEED_LOW=250
 	elif [ "$PI_VER" = "4B" ]; then
-		IPERF_SPEED_LOW=900
+		IPERF_SPEED_LOW=500
 	fi
 fi
 
@@ -113,17 +113,11 @@ if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
 	fi
 fi
 
-bin/cpuburn-a53 &
-
-echo -n "Running GPU: "
-
-(sleep 10 && pkill kmscube) &
-
-#if [ "$PI_VER" = "4B" ]; then
-#	kmscube -D /dev/dri/card0 > /dev/null 2>&1 || true
-#else
-	kmscube > /dev/null 2>&1 || true
-#fi
+if [ "$PI_VER" = "4B" ]; then
+	PI_MEM_MB=$(free --mega | grep ^Mem | tr -s " " | cut -f 2 -d " ")
+	PI_MEM_GB=$(((PI_MEM_MB+512)/1024))
+	echo "Memory Size: ${COLOR_GREEN}${PI_MEM_GB}GB${COLOR_NO}"
+fi
 
 echo -n "Testing Voltage..."
 
@@ -139,6 +133,14 @@ elif [ $VOLTAGE_STATUS_PREV -ne 0 ]; then
 else
 	echo "${COLOR_GREEN}OK${COLOR_NO}"
 fi
+
+bin/cpuburn-a53 &
+
+echo -n "Running GPU: "
+
+(sleep 10 && pkill kmscube) &
+
+kmscube > /dev/null 2>&1 || true
 
 echo -n "Testing CPU..."
 CPUBURN_THREADS=`ps -Af | grep cpuburn-a53 | wc -l`
@@ -156,7 +158,7 @@ echo -n "Testing HDMI..."
 if [ "$PI_VER" = "4B" ]; then
 	#HDMI_STATUS=`cat /sys/class/drm/card1/card1-HDMI-A-1/status`
 	#HDMI_ENABLED=`cat /sys/class/drm/card1/card1-HDMI-A-1/enabled`
-	HDMI_MODES_SYS_FILE=/sys/class/drm/card1/card1-HDMI-A-1/modes
+	HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
 else
 	#HDMI_STATUS=`cat /sys/class/drm/card0/card0-HDMI-A-1/status`
 	#HDMI_ENABLED=`cat /sys/class/drm/card0/card0-HDMI-A-1/enabled`
@@ -275,10 +277,23 @@ while true; do
 	fi
 done
 
-exit
 
-echo "Testing USB"
-echo "Testing USB 3"
+if [ "$PI_VER" = "4B" ]; then
+	echo -n "Testing USB Device 1..."
+	if [ -b /dev/sda1 ]; then
+		echo "${COLOR_GREEN}OK${COLOR_NO}"
+	else
+		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
+	fi
+	echo -n "Testing USB Device 2..."
+	if [ -b /dev/sdb1 ]; then
+		echo "${COLOR_GREEN}OK${COLOR_NO}"
+	else
+		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
+	fi
+#	echo -n "Testing USB 3..."
+fi
+exit
 echo "Testing CVBS"
 echo "Testing GPIO"
 echo "Testing PoE"
