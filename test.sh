@@ -121,7 +121,7 @@ fi
 
 PI_SN=$(grep ^Serial /proc/cpuinfo | cut -f 2 -d " ")
 
-echo "Serial Number: $PI_SN"
+echo "Serial Number: ${COLOR_GREEN}${PI_SN}${COLOR_NO}"
 
 echo -n "Testing Voltage..."
 
@@ -163,6 +163,9 @@ if [ "$PI_VER" = "4B" ]; then
 	#HDMI_STATUS=`cat /sys/class/drm/card1/card1-HDMI-A-1/status`
 	#HDMI_ENABLED=`cat /sys/class/drm/card1/card1-HDMI-A-1/enabled`
 	HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
+	if [ ! -e "$HDMI_MODES_SYS_FILE" ]; then
+		HDMI_MODES_SYS_FILE=/sys/class/drm/card1/card1-HDMI-A-1/modes
+	fi
 else
 	#HDMI_STATUS=`cat /sys/class/drm/card0/card0-HDMI-A-1/status`
 	#HDMI_ENABLED=`cat /sys/class/drm/card0/card0-HDMI-A-1/enabled`
