@@ -119,6 +119,10 @@ if [ "$PI_VER" = "4B" ]; then
 	echo "Memory Size: ${COLOR_GREEN}${PI_MEM_GB}GB${COLOR_NO}"
 fi
 
+PI_SN=$(grep ^Serial /proc/cpuinfo | cut -f 2 -d " ")
+
+echo "Serial Number: $PI_SN"
+
 echo -n "Testing Voltage..."
 
 VOLTAGE_STATUS_HEX=`vcgencmd get_throttled | cut -f 2 -d x`
