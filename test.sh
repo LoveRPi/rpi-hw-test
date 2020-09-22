@@ -109,7 +109,7 @@ if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
 	elif [ "$PI_VER" = "3BP" ]; then
 		IPERF_WIRELESS_SPEED_LOW=50
 	elif [ "$PI_VER" = "4B" ]; then
-		IPERF_WIRELESS_SPEED_LOW=100
+		IPERF_WIRELESS_SPEED_LOW=50
 	fi
 fi
 
@@ -119,11 +119,11 @@ echo -n "Running GPU: "
 
 (sleep 10 && pkill kmscube) &
 
-if [ "$PI_VER" = "4B" ]; then
-	kmscube -D /dev/dri/card1 > /dev/null 2>&1 || true
-else
+#if [ "$PI_VER" = "4B" ]; then
+#	kmscube -D /dev/dri/card0 > /dev/null 2>&1 || true
+#else
 	kmscube > /dev/null 2>&1 || true
-fi
+#fi
 
 echo -n "Testing Voltage..."
 
