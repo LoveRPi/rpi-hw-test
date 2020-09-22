@@ -262,6 +262,21 @@ else
 	nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
 fi
 
+if [ "$PI_VER" = "4B" ]; then
+	echo -n "Testing USB Device 1..."
+	if [ -b /dev/sda1 ]; then
+		echo "${COLOR_GREEN}OK${COLOR_NO}"
+	else
+		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
+	fi
+	echo -n "Testing USB Device 2..."
+	if [ -b /dev/sdb1 ]; then
+		echo "${COLOR_GREEN}OK${COLOR_NO}"
+	else
+		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
+	fi
+fi
+
 while true; do
 	read -n 1 -p "Press s to shutdown. Press r to reboot. Press t to re-test. Press c to go to configuration." KEY
 	echo -e "\b "
@@ -278,21 +293,6 @@ while true; do
 done
 
 
-if [ "$PI_VER" = "4B" ]; then
-	echo -n "Testing USB Device 1..."
-	if [ -b /dev/sda1 ]; then
-		echo "${COLOR_GREEN}OK${COLOR_NO}"
-	else
-		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
-	fi
-	echo -n "Testing USB Device 2..."
-	if [ -b /dev/sdb1 ]; then
-		echo "${COLOR_GREEN}OK${COLOR_NO}"
-	else
-		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
-	fi
-#	echo -n "Testing USB 3..."
-fi
 exit
 echo "Testing CVBS"
 echo "Testing GPIO"
