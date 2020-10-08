@@ -175,7 +175,8 @@ if [ -z "$WIFI_NETS" ]; then
 	echo "${COLOR_RED}NO WIRELESS NET${COLOR_NO}"
 else
 	echo -n "${COLOR_GREEN}OK${COLOR_NO} "
-	echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-
+	WIFI_CONNECTION=$(echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-)
+	echo $WIFI_CONNECTION
 	echo -n "WiFi: "
 	nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
 	nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
@@ -240,6 +241,7 @@ if [ ! -z "$REPORT_IP" ]; then
 		-d "upload[]=$HDMI_MODE_TARGET" \
 		-d "upload[]=$IPERF_SPEED" \
 		-d "upload[]=$IPERF_WIRELESS_SPEED"
+		-d "upload[]=$WIFI_CONNECTION"
 #		-d "upload[]=" \
 fi
 
