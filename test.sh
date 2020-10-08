@@ -237,7 +237,7 @@ if [ ! -z "$REPORT_IP" ]; then
 			-d "upload[]=1" \
 			-d "upload[]=$PI_VER" \
 			-d "upload[]=$PI_REV" \
-			-d "upload[]=$PI_REV_TEXT" \
+			-d "upload[]=$PI_VER_TEXT" \
 			-d "upload[]=$PI_MEM" \
 			-d "upload[]=$PI_SERIAL" \
 			-d "upload[]=$VOLTAGE_STATUS_PREV" \
