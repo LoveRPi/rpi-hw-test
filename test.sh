@@ -124,6 +124,10 @@ else
 	echo "${COLOR_GREEN}OK${COLOR_NO}"
 fi
 
+if [ -z "$IPERF_SPEED_LOW" ]; then
+	IPERF_SPEED_LOW=$(RPI_getMinNetworkSpeed $PI_VER)
+fi
+
 echo -n "Ethernet: "
 
 ETH=$(RPI_getEthernet)
@@ -159,14 +163,9 @@ if [ $? -eq 0 ]; then
 	fi
 fi
 
-if [ -z "$IPERF_SPEED_LOW" ]; then
-	IPERF_SPEED_LOW=$(RPI_getMinNetworkSpeed $PI_VER)
-fi
-
 if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
 	IPERF_WIRELESS_SPEED_LOW=$(RPI_getMinNetworkSpeed $PI_VER 1)
 fi
-
 
 echo -n "WiFi Signal: "
 #nmcli radio wifi on > /dev/null 2>&1 || true
