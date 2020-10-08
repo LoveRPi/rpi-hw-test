@@ -50,32 +50,12 @@ trap finish EXIT
 ### REVISION ###
 COLOR_NEXT="$COLOR_GREEN"
 PI_REV=`grep Revision /proc/cpuinfo | cut -f 2 -d ' '`
-PI_VER=$(RPI_getVerion $PI_REV)
+PI_VER=$(RPI_getVersion $PI_REV)
 PI_VER_TEXT=$(RPI_getVersion $PI_REV 1)
 if [ $? -ne 0 ]; then
 	COLOR_NEXT="$COLOR_RED"
 fi
 echo "${COLOR_NEXT}${PI_VER_TEXT}${COLOR_NO}"
-
-if [ -z "$IPERF_SPEED_LOW" ]; then
-	if [ "$PI_VER" = "3B" ]; then
-		IPERF_SPEED_LOW=90
-	elif [ "$PI_VER" = "3BP" ]; then
-		IPERF_SPEED_LOW=250
-	elif [ "$PI_VER" = "4B" ]; then
-		IPERF_SPEED_LOW=500
-	fi
-fi
-
-if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
-	if [ "$PI_VER" = "3B" ]; then
-		IPERF_WIRELESS_SPEED_LOW=25
-	elif [ "$PI_VER" = "3BP" ]; then
-		IPERF_WIRELESS_SPEED_LOW=50
-	elif [ "$PI_VER" = "4B" ]; then
-		IPERF_WIRELESS_SPEED_LOW=50
-	fi
-fi
 
 ### MEMORY ###
 COLOR_NEXT="$COLOR_GREEN"
@@ -99,31 +79,27 @@ elif [ -z "$PI_SERIAL" ]; then
 fi	
 echo "Serial Number: ${COLOR_NEXT}${PI_SERIAL}${COLOR_NO}"
 
-
-echo -n "Testing Voltage..."
-
-VOLTAGE_STATUS_HEX=`vcgencmd get_throttled | cut -f 2 -d x`
-VOLTAGE_STATUS_DEC=$((16#$VOLTAGE_STATUS_HEX))
-VOLTAGE_STATUS_PREV=$(((VOLTAGE_STATUS_DEC & 0x10000) != 0))
-VOLTAGE_STATUS_CUR=$(((VOLTAGE_STATUS_DEC & 0x1) != 0))
+### VOLTAGE ###
+VOLTAGE_STATUS_PREV=$(RPI_getVoltageStatus 1)
+VOLTAGE_STATUS_CUR=$(RPI_getVoltageStatus)
 
 if [ $VOLTAGE_STATUS_CUR -ne 0 ]; then
-	echo "${COLOR_RED}LOW${COLOR_NO}"
+	echo "Voltage: ${COLOR_RED}LOW${COLOR_NO}"
 elif [ $VOLTAGE_STATUS_PREV -ne 0 ]; then
-	echo "${COLOR_RED}LOW PREV${COLOR_NO}"
+	echo "Voltage: ${COLOR_RED}LOW PREV${COLOR_NO}"
 else
-	echo "${COLOR_GREEN}OK${COLOR_NO}"
+	echo "Voltage: ${COLOR_GREEN}OK${COLOR_NO}"
 fi
 
 bin/cpuburn-a53 &
 
-echo -n "Running GPU: "
+echo -n "GPU: "
 
 (sleep 10 && pkill kmscube) &
 
 kmscube > /dev/null 2>&1 || true
 
-echo -n "Testing CPU..."
+echo -n "CPU: "
 CPUBURN_THREADS=`ps -Af | grep cpuburn-a53 | wc -l`
 
 if [ $CPUBURN_THREADS -eq 5 ]; then
@@ -135,32 +111,17 @@ fi
 pkill cpuburn-a53
 trap - EXIT
 
-echo -n "Testing HDMI..."
+echo -n "HDMI: "
+HDMI_MODES=$(RPI_getHDMIModes $PI_VER)
+HDMI_MODE_TARGET=1920x1080
 if [ "$PI_VER" = "4B" ]; then
-	#HDMI_STATUS=`cat /sys/class/drm/card1/card1-HDMI-A-1/status`
-	#HDMI_ENABLED=`cat /sys/class/drm/card1/card1-HDMI-A-1/enabled`
-	HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
-	if [ ! -e "$HDMI_MODES_SYS_FILE" ]; then
-		HDMI_MODES_SYS_FILE=/sys/class/drm/card1/card1-HDMI-A-1/modes
-	fi
-else
-	#HDMI_STATUS=`cat /sys/class/drm/card0/card0-HDMI-A-1/status`
-	#HDMI_ENABLED=`cat /sys/class/drm/card0/card0-HDMI-A-1/enabled`
-	HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
+	HDMI_MODE_TARGET=3840x2160
 fi
-if [ ! -e $HDMI_MODES_SYS_FILE ]; then
-	echo "${COLOR_RED}NOT FOUND!${COLOR_NO}"
+HDMI_MODE_TARGET=$(echo "$HDMI_MODES" | grep $HDMI_MODE_TARGET`)
+if [ -z "$HDMI_MODE_TARGET" ]; then
+	echo "${COLOR_RED}LOW $(echo "$HDMI_MODES" | head -n 1)${COLOR_NO}"
 else
-	if [ "$PI_VER" = "4B" ]; then
-		HDMI_MODE_TARGET=`cat $HDMI_MODES_SYS_FILE | grep 3840x2160`
-	else
-		HDMI_MODE_TARGET=`cat $HDMI_MODES_SYS_FILE | grep 1920x1080`
-	fi
-	if [ -z "$HDMI_MODE_TARGET" ]; then
-		echo "${COLOR_RED}LOW `head -n 1 $HDMI_MODE_SYS_FILE`${COLOR_NO}"
-	else
-		echo "${COLOR_GREEN}OK${COLOR_NO}"
-	fi
+	echo "${COLOR_GREEN}OK${COLOR_NO}"
 fi
 
 echo -n "Testing Ethernet"
@@ -203,7 +164,16 @@ else
 	fi
 fi
 
-echo -n "Testing WiFi Signal..."
+if [ -z "$IPERF_SPEED_LOW" ]; then
+	IPERF_SPEED_LOW=$(RPI_getMinNetworkSpeed $PI_VER)
+fi
+
+if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
+	IPERF_WIRELESS_SPEED_LOW=$(RPI_getMinNetworkSpeed $PI_VER 1)
+fi
+
+
+echo -n "WiFi Signal: "
 #nmcli radio wifi on > /dev/null 2>&1 || true
 WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\\*\?\s*$WIFI_NAME\s" || true`"
 if [ -z "$WIFI_NETS" ]; then
@@ -211,7 +181,7 @@ if [ -z "$WIFI_NETS" ]; then
 else
 	echo -n "${COLOR_GREEN}OK${COLOR_NO} "
 	echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-
-	echo -n "Testing WiFi..."
+	echo -n "WiFi: "
 	nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
 	nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
 	WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
@@ -247,13 +217,13 @@ else
 fi
 
 if [ "$PI_VER" = "4B" ]; then
-	echo -n "Testing USB Device 1..."
+	echo -n "USB Device 1: "
 	if [ -b /dev/sda1 ]; then
 		echo "${COLOR_GREEN}OK${COLOR_NO}"
 	else
 		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
 	fi
-	echo -n "Testing USB Device 2..."
+	echo -n "USB Device 2: "
 	if [ -b /dev/sdb1 ]; then
 		echo "${COLOR_GREEN}OK${COLOR_NO}"
 	else

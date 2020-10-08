@@ -72,4 +72,70 @@ RPI_getSerialNumber(){
 	echo "${PI_SN}"
 }
 
+RPI_getMinNetworkSpeed(){
+	if [ -z "$1" ]; then
+		echo "$0 PI_VERSION WIRELESS" >&2
+		return 1
+	fi
+	case $1 in
+		3B)
+			WIRED_SPEED_MIN=90
+			WIRELESS_SPEED_MIN=25
+			;;
+		3BP)
+			WIRED_SPEED_MIN=250
+			WIRELESS_SPEED_MIN=50
+			;;
+		4B)
+			WIRED_SPEED_MIN=750
+			WIRELESS_SPEED_MIN=50
+			;;
+		*)
+			echo "Unknown Pi Version." >&2
+			return 1
+			;;
 
+	esac
+	if [ -z "$2" ]; then
+		echo $WIRED_SPEED_MIN
+	else
+		echo $WIRELESS_SPEED_MIN
+	fi
+}
+
+RPI_getVoltageStatus(){
+	VOLTAGE_STATUS_HEX=`vcgencmd get_throttled | cut -f 2 -d x`
+	VOLTAGE_STATUS_DEC=$((16#$VOLTAGE_STATUS_HEX))
+	if [ -z "$2" ]; then
+		echo $(((VOLTAGE_STATUS_DEC & 0x1) != 0))
+	else
+		echo $(((VOLTAGE_STATUS_DEC & 0x10000) != 0))
+	fi
+}
+
+RPI_getHDMIModes(){
+	if [ -z "$1" ]; then
+		echo "$0 PI_VERSION" >&2
+		return 1
+	fi
+	case $1 in
+		4B)
+			HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
+			if [ ! -e "$HDMI_MODES_SYS_FILE" ]; then
+				HDMI_MODES_SYS_FILE=/sys/class/drm/card1/card1-HDMI-A-1/modes
+			fi
+			;;
+		3B | 3BP)
+			HDMI_MODES_SYS_FILE=/sys/class/drm/card0/card0-HDMI-A-1/modes
+			;;
+		*)
+			echo "Unknown Pi Version." >&2
+			return 1
+			;;
+	esac
+	if [ ! -e "$HDMI_MODES_SYS_FILE" ]; then
+		echo "HDMI modes file missing!" >&2
+		return 1
+	fi
+	cat $HDMI_MODES_SYS_FILE
+}
