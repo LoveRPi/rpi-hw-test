@@ -48,50 +48,13 @@ function finish {
 }
 trap finish EXIT
 
+. functions.sh
+
 PI_REV=`grep Revision /proc/cpuinfo | cut -f 2 -d ' '`
-case "$PI_REV" in
-	a03111 | b03111 | c03111)
-		PI_VER=4B
-		echo "${COLOR_GREEN}Raspberry Pi 4 Model B 1.1 Manufactured by Sony UK${COLOR_NO}"
-		;;
-	b03112 | c03112)
-		PI_VER=4B
-		echo "${COLOR_GREEN}Raspberry Pi 4 Model B 1.2 Manufactured by Sony UK${COLOR_NO}"
-		;;
-	d03114)
-		PI_VER=4B
-		echo "${COLOR_GREEN}Raspberry Pi 4 Model B 1.4 Manufactured by Sony UK${COLOR_NO}"
-		;;
-	a020d3)
-		PI_VER=3BP
-		echo "${COLOR_GREEN}Raspberry Pi 3 Model B+ 1.3 Manufactured by Sony UK${COLOR_NO}"
-		;;
-	a02082)
-		PI_VER=3B
-		echo "${COLOR_RED}Raspberry Pi 3 Model B 1.2 Manufactured by Sony UK${COLOR_NO}"
-		;;
-	a22082)
-		PI_VER=3B
-		echo "${COLOR_GREEN}Raspberry Pi 3 Model B 1.2 Manufactured by Embest${COLOR_NO}"
-		;;
-	a22083)
-		PI_VER=3B
-		echo "${COLOR_GREEN}Raspberry Pi 3 Model B 1.3 Manufactured by Embest${COLOR_NO}"
-		;;
-	a32082)
-		PI_VER=3B
-		echo "${COLOR_RED}Raspberry Pi 3 Model B 1.2 Manufactured by Sony Japan${COLOR_NO}"
-		;;
-	a52082)
-		PI_VER=3B
-		echo "${COLOR_RED}Raspberry Pi 3 Model B 1.2 Manufactured by Stadium${COLOR_NO}"
-		;;
-	*)
-		PI_VER=UNKNOWN
-		echo "${COLOR_RED}Unable to determine Raspberry Pi code.${COLOR_NO}"
-		sleep infinity
-		;;
-esac
+PI_VER=
+PI_VER_TEXT=
+
+RPI_getRevision
 
 if [ -z "$IPERF_SPEED_LOW" ]; then
 	if [ "$PI_VER" = "3B" ]; then
@@ -113,15 +76,9 @@ if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
 	fi
 fi
 
-if [ "$PI_VER" = "4B" ]; then
-	PI_MEM_MB=$(free --mega | grep ^Mem | tr -s " " | cut -f 2 -d " ")
-	PI_MEM_GB=$(((PI_MEM_MB+512)/1024))
-	echo "Memory Size: ${COLOR_GREEN}${PI_MEM_GB}GB${COLOR_NO}"
-fi
+RPI_getMemory
 
-PI_SN=$(grep ^Serial /proc/cpuinfo | cut -f 2 -d " ")
-
-echo "Serial Number: ${COLOR_GREEN}${PI_SN}${COLOR_NO}"
+RPI_getSerialNumber
 
 echo -n "Testing Voltage..."
 
