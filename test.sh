@@ -50,8 +50,8 @@ trap finish EXIT
 ### REVISION ###
 COLOR_NEXT="$COLOR_GREEN"
 PI_REV=`grep Revision /proc/cpuinfo | cut -f 2 -d ' '`
-PI_VER=$(RPI_getRevision $PI_REV)
-PI_VER_TEXT=$(RPI_getRevision $PI_REV 1)
+PI_VER=$(RPI_getVerion $PI_REV)
+PI_VER_TEXT=$(RPI_getVersion $PI_REV 1)
 if [ $? -ne 0 ]; then
 	COLOR_NEXT="$COLOR_RED"
 fi
