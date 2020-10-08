@@ -119,7 +119,8 @@ if [ "$PI_VER" = "4B" ]; then
 fi
 HDMI_MODE_TARGET=$(echo "$HDMI_MODES" | grep $HDMI_MODE_TARGET)
 if [ -z "$HDMI_MODE_TARGET" ]; then
-	echo "${COLOR_RED}LOW $(echo "$HDMI_MODES" | head -n 1)${COLOR_NO}"
+	HDMI_MODE_TARGET=$(echo "$HDMI_MODES" | head -n 1)
+	echo "${COLOR_RED}LOW ${HDMI_MODE_TARGET}${COLOR_NO}"
 else
 	echo "${COLOR_GREEN}OK${COLOR_NO}"
 fi
@@ -228,6 +229,7 @@ fi
 if [ ! -z "$REPORT_IP" ]; then
 	echo -n "Sending Report: $REPORT_IP "
 	curl -X http://$REPORT_IP/raspberry_pi/ \
+		-d "upload[]=1" \
 		-d "upload[]=$PI_VER" \
 		-d "upload[]=$PI_REV" \
 		-d "upload[]=$PI_REV_TEXT" \
@@ -235,7 +237,10 @@ if [ ! -z "$REPORT_IP" ]; then
 		-d "upload[]=$PI_SERIAL" \
 		-d "upload[]=$VOLTAGE_STATUS_PREV" \
 		-d "upload[]=$VOLTAGE_STATUS_CUR" \
-		-d "upload[]=" \
+		-d "upload[]=$HDMI_MODE_TARGET" \
+		-d "upload[]=$IPERF_SPEED" \
+		-d "upload[]=$IPERF_WIRELESS_SPEED"
+#		-d "upload[]=" \
 fi
 
 while true; do
