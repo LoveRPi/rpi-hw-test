@@ -138,9 +138,9 @@ if [ $? -eq 0 ]; then
 	ETH_STATE=$(cat /sys/class/net/e*/operstate)
 	if [ "$ETH_STATE" = "up" ]; then
 		if [ -z "$IPERF_PORT" ]; then
-			IPERF_RESULT=`iperf -x CMSV -y C -c $IPERF_IP 2> /dev/null`
+			IPERF_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP 2> /dev/null`
 		else
-			IPERF_RESULT=`iperf -x CMSV -y C -c $IPERF_IP -p $IPERF_PORT 2> /dev/null`
+			IPERF_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null`
 		fi
 		IPERF_RESULT_SUCCESS=`echo "$IPERF_RESULT" | grep ^20 || true`
 		if [ -z "$IPERF_RESULT_SUCCESS" ]; then
@@ -176,7 +176,7 @@ if [ -z "$WIFI_NETS" ]; then
 else
 	echo -n "${COLOR_GREEN}OK${COLOR_NO} "
 	WIFI_CONNECTION=$(echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-)
-	echo $WIFI_CONNECTION
+	echo "$WIFI_CONNECTION"
 	echo -n "WiFi: "
 	nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
 	nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
@@ -191,9 +191,9 @@ else
 			nmcli device disconnect $ETH > /dev/null 2>&1 || true
 		fi
 		if [ -z "$IPERF_PORT" ]; then
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -c $IPERF_IP 2> /dev/null || true`
+			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP 2> /dev/null || true`
 		else
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
+			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
 		fi
 		nmcli device disconnect wlan0 > /dev/null 2>&1 || true
 		IPERF_WIRELESS_RESULT_SUCCESS=`echo "$IPERF_WIRELESS_RESULT" | grep ^20 || true`
@@ -232,7 +232,8 @@ if [ ! -z "$REPORT_IP" ]; then
 	ETH_STATE=$(cat /sys/class/net/e*/operstate)
 	if [ "$ETH_STATE" = "up" ]; then
 		echo -n "Sending Report: $REPORT_IP "
-		curl -X http://$REPORT_IP/raspberry_pi/ \
+		CURL_REPORT=$(
+		curl -X POST -s -f http://$REPORT_IP/raspberry-pi/ \
 			-d "upload[]=1" \
 			-d "upload[]=$PI_VER" \
 			-d "upload[]=$PI_REV" \
@@ -243,9 +244,15 @@ if [ ! -z "$REPORT_IP" ]; then
 			-d "upload[]=$VOLTAGE_STATUS_CUR" \
 			-d "upload[]=$HDMI_MODE_TARGET" \
 			-d "upload[]=$IPERF_SPEED" \
-			-d "upload[]=$IPERF_WIRELESS_SPEED"
+			-d "upload[]=$IPERF_WIRELESS_SPEED" \
 			-d "upload[]=$WIFI_CONNECTION"
 #			-d "upload[]=" \
+		)
+		if [ $? -eq 0 ]; then
+			echo "${COLOR_GREEN}${CURL_REPORT}${COLOR_NO}"
+		else
+			echo "${COLOR_RED}${CURL_REPORT}${COLOR_NO}"
+		fi
 	else
 		echo "Sending Report: ${COLOR_RED}No ethernet connectivity.${COLOR_NO}"
 	fi
