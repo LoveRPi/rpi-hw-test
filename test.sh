@@ -1,10 +1,7 @@
 #!/bin/bash
 
-set -e
-
 SOURCE_DIR=$(readlink -f $(dirname ${BASH_SOURCE[0]}))
 cd $SOURCE_DIR
-
 
 COLOR_RED=`tput setaf 1`
 COLOR_GREEN=`tput setaf 2`
@@ -50,11 +47,15 @@ trap finish EXIT
 
 . functions.sh
 
+### REVISION ###
+COLOR_NEXT="$COLOR_GREEN"
 PI_REV=`grep Revision /proc/cpuinfo | cut -f 2 -d ' '`
-PI_VER=
-PI_VER_TEXT=
-
-RPI_getRevision
+PI_VER=$(RPI_getRevision $PI_REV)
+PI_VER_TEXT=$(RPI_getRevision $PI_REV 1)
+if [ $? -ne 0 ]; then
+	COLOR_NEXT="$COLOR_RED"
+fi
+echo "${COLOR_NEXT}${PI_VER_TEXT}${COLOR_NO}"
 
 if [ -z "$IPERF_SPEED_LOW" ]; then
 	if [ "$PI_VER" = "3B" ]; then
@@ -76,9 +77,28 @@ if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
 	fi
 fi
 
-RPI_getMemory
+### MEMORY ###
+COLOR_NEXT="$COLOR_GREEN"
+PI_MEM=$(RPI_getMemory)
+if [ $? -ne 0 ]; then
+	COLOR_NEXT="$COLOR_RED"
+elif [ -z "$PI_MEM" ]; then
+	COLOR_NEXT="$COLOR_RED"
+elif [ "$PI_MEM" -lt 1 ]; then
+	COLOR_NEXT="$COLOR_RED"
+fi
+echo "Memory Size: ${COLOR_NEXT}${PI_MEM}GB${COLOR_NO}"
 
-RPI_getSerialNumber
+### SERIAL ###
+COLOR_NEXT="$COLOR_GREEN"
+PI_SERIAL=$(RPI_getSerialNumber)
+if [ $? -ne 0 ]; then
+	COLOR_NEXT="$COLOR_RED"
+elif [ -z "$PI_SERIAL" ]; then
+	COLOR_NEXT="$COLOR_RED"
+fi	
+echo "Serial Number: ${COLOR_NEXT}${PI_SERIAL}${COLOR_NO}"
+
 
 echo -n "Testing Voltage..."
 
