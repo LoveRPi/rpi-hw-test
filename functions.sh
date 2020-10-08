@@ -139,3 +139,17 @@ RPI_getHDMIModes(){
 	fi
 	cat $HDMI_MODES_SYS_FILE
 }
+
+RPI_getEthernet(){
+	ETHERNET=
+	for eth in /sys/class/net/e*; do
+		ETHERNET=$eth
+	done
+	if [ -z "$ETHERNET" ]; then
+		echo "Ethernet not found." >&2
+		return 1
+	fi
+	ETHERNET=${ETHERNET##*/}
+	echo $ETHERNET
+}
+

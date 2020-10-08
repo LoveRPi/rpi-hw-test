@@ -117,25 +117,20 @@ HDMI_MODE_TARGET=1920x1080
 if [ "$PI_VER" = "4B" ]; then
 	HDMI_MODE_TARGET=3840x2160
 fi
-HDMI_MODE_TARGET=$(echo "$HDMI_MODES" | grep $HDMI_MODE_TARGET`)
+HDMI_MODE_TARGET=$(echo "$HDMI_MODES" | grep $HDMI_MODE_TARGET)
 if [ -z "$HDMI_MODE_TARGET" ]; then
 	echo "${COLOR_RED}LOW $(echo "$HDMI_MODES" | head -n 1)${COLOR_NO}"
 else
 	echo "${COLOR_GREEN}OK${COLOR_NO}"
 fi
 
-echo -n "Testing Ethernet"
-ETH=""
-for eth in /sys/class/net/e*; do
-	ETH=$eth
-done
-ETH=${ETH##*/}
-if [ -z "$ETH" ]; then
-	echo "...${COLOR_RED}NOT FOUND!${COLOR_NO}"
-else
+echo -n "Ethernet: "
+
+ETH=$(RPI_getEthernet)
+if [ $? -eq 0 ]; then
 	echo -n " $ETH..."
 	nmcli device connect $ETH > /dev/null 2>&1 || true
-	ETH_STATE=`cat /sys/class/net/e*/operstate`
+	ETH_STATE=$(cat /sys/class/net/e*/operstate)
 	if [ "$ETH_STATE" = "up" ]; then
 		if [ -z "$IPERF_PORT" ]; then
 			IPERF_RESULT=`iperf -x CMSV -y C -c $IPERF_IP 2> /dev/null`
@@ -229,6 +224,19 @@ if [ "$PI_VER" = "4B" ]; then
 	else
 		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
 	fi
+fi
+
+if [ ! -z "$REPORT_IP" ]; then
+	echo -n "Sending Report: $REPORT_IP "
+	curl -X http://$REPORT_IP/raspberry_pi/ \
+		-d "upload[]=$PI_VER" \
+		-d "upload[]=$PI_REV" \
+		-d "upload[]=$PI_REV_TEXT" \
+		-d "upload[]=$PI_MEM" \
+		-d "upload[]=$PI_SERIAL" \
+		-d "upload[]=$VOLTAGE_STATUS_PREV" \
+		-d "upload[]=$VOLTAGE_STATUS_CUR" \
+		-d "upload[]=" \
 fi
 
 while true; do
