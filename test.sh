@@ -133,7 +133,7 @@ echo -n "Ethernet: "
 
 ETH=$(RPI_getEthernet)
 if [ $? -eq 0 ]; then
-	echo -n " $ETH..."
+	echo -n "$ETH "
 	nmcli device connect $ETH > /dev/null 2>&1 || true
 	ETH_STATE=$(cat /sys/class/net/e*/operstate)
 	if [ "$ETH_STATE" = "up" ]; then
@@ -228,21 +228,28 @@ if [ "$PI_VER" = "4B" ]; then
 fi
 
 if [ ! -z "$REPORT_IP" ]; then
-	echo -n "Sending Report: $REPORT_IP "
-	curl -X http://$REPORT_IP/raspberry_pi/ \
-		-d "upload[]=1" \
-		-d "upload[]=$PI_VER" \
-		-d "upload[]=$PI_REV" \
-		-d "upload[]=$PI_REV_TEXT" \
-		-d "upload[]=$PI_MEM" \
-		-d "upload[]=$PI_SERIAL" \
-		-d "upload[]=$VOLTAGE_STATUS_PREV" \
-		-d "upload[]=$VOLTAGE_STATUS_CUR" \
-		-d "upload[]=$HDMI_MODE_TARGET" \
-		-d "upload[]=$IPERF_SPEED" \
-		-d "upload[]=$IPERF_WIRELESS_SPEED"
-		-d "upload[]=$WIFI_CONNECTION"
-#		-d "upload[]=" \
+	nmcli device connect $ETH > /dev/null 2>&1 || true
+	ETH_STATE=$(cat /sys/class/net/e*/operstate)
+	if [ "$ETH_STATE" = "up" ]; then
+		echo -n "Sending Report: $REPORT_IP "
+		curl -X http://$REPORT_IP/raspberry_pi/ \
+			-d "upload[]=1" \
+			-d "upload[]=$PI_VER" \
+			-d "upload[]=$PI_REV" \
+			-d "upload[]=$PI_REV_TEXT" \
+			-d "upload[]=$PI_MEM" \
+			-d "upload[]=$PI_SERIAL" \
+			-d "upload[]=$VOLTAGE_STATUS_PREV" \
+			-d "upload[]=$VOLTAGE_STATUS_CUR" \
+			-d "upload[]=$HDMI_MODE_TARGET" \
+			-d "upload[]=$IPERF_SPEED" \
+			-d "upload[]=$IPERF_WIRELESS_SPEED"
+			-d "upload[]=$WIFI_CONNECTION"
+#			-d "upload[]=" \
+	else
+		echo "Sending Report: ${COLOR_RED}No ethernet connectivity.${COLOR_NO}"
+	fi
+	nmcli device disconnect $ETH > /dev/null 2>&1 || true
 fi
 
 while true; do
