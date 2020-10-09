@@ -170,6 +170,7 @@ if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
 fi
 
 echo -n "WiFi Signal: "
+iw wlan0 set power_save off
 WIFI_FAIL=1
 #nmcli radio wifi on > /dev/null 2>&1 || true
 WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\\*\?\s*$WIFI_NAME\s" || true`"
@@ -192,7 +193,6 @@ else
 		if [ ! -z "$ETH" ]; then
 			nmcli device disconnect $ETH > /dev/null 2>&1 || true
 		fi
-		iw wlan0 set power_save off
 		if [ -z "$IPERF_PORT" ]; then
 			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 1 -c $IPERF_IP 2> /dev/null || true`
 			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 1 -c $IPERF_IP 2> /dev/null || true`
