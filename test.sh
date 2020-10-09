@@ -229,7 +229,6 @@ if [ "$PI_VER" = "4B" ]; then
 		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
 	fi
 fi
-set -x
 if [ ! -z "$REPORT_IP" ]; then
 	SEND_REPORT=0
 	if [ $ETH_FAIL -eq 0 ]; then
