@@ -193,6 +193,7 @@ else
 		if [ ! -z "$ETH" ]; then
 			nmcli device disconnect $ETH > /dev/null 2>&1 || true
 		fi
+		sleep 5
 		if [ -z "$IPERF_PORT" ]; then
 			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP 2> /dev/null || true`
 		else
