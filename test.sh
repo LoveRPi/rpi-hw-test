@@ -220,14 +220,18 @@ if [ "$PI_VER" = "4B" ]; then
 	echo -n "USB Device 1: "
 	if [ -b /dev/sda1 ]; then
 		echo "${COLOR_GREEN}OK${COLOR_NO}"
+		USB_0=1
 	else
 		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
+		USB_0=0
 	fi
 	echo -n "USB Device 2: "
 	if [ -b /dev/sdb1 ]; then
 		echo "${COLOR_GREEN}OK${COLOR_NO}"
+		USB_1=1
 	else
 		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
+		USB_1=0
 	fi
 fi
 if [ ! -z "$REPORT_IP" ]; then
@@ -262,7 +266,9 @@ if [ ! -z "$REPORT_IP" ]; then
 			-d "upload[]=$HDMI_MODE_TARGET" \
 			-d "upload[]=$IPERF_SPEED" \
 			-d "upload[]=$IPERF_WIRELESS_SPEED" \
-			-d "upload[]=$WIFI_CONNECTION"
+			-d "upload[]=$WIFI_CONNECTION" \
+			-d "upload[]=$USB_0" \
+			-d "upload[]=$USB_1"
 #			-d "upload[]=" \
 		)
 		if [ $? -eq 0 ]; then
