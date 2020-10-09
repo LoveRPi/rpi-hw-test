@@ -3,9 +3,10 @@
 if (isset($_POST['upload'])){
 
 	$file_handle = fopen('data.csv', 'a');
-	fputcsv($file_handle,[date("Y-m-d H:i:s")] + $_POST['upload']);
+	$array = array_merge([date("Y-m-d H:i:s")],$_POST['upload']);
+	fputcsv($file_handle,$array);
 	fclose($handle);
-	#echo print_r($_POST['upload'],true);
+	#echo print_r($array,true);
 	echo "OK";	
 	exit;
 }
