@@ -229,7 +229,7 @@ if [ "$PI_VER" = "4B" ]; then
 		echo "${COLOR_RED}NOT FOUND${COLOR_NO}"
 	fi
 fi
-
+set -x
 if [ ! -z "$REPORT_IP" ]; then
 	SEND_REPORT=0
 	if [ $ETH_FAIL -eq 0 ]; then
@@ -239,6 +239,7 @@ if [ ! -z "$REPORT_IP" ]; then
 			SEND_REPORT=1
 		fi
 	elif [ $WIFI_FAIL -eq 0 ]; then
+		sleep 3
 		nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
 		WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
 		WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
