@@ -194,13 +194,9 @@ else
 			nmcli device disconnect $ETH > /dev/null 2>&1 || true
 		fi
 		if [ -z "$IPERF_PORT" ]; then
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 1 -c $IPERF_IP 2> /dev/null || true`
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 1 -c $IPERF_IP 2> /dev/null || true`
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 5 -c $IPERF_IP 2> /dev/null || true`
+			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP 2> /dev/null || true`
 		else
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 1 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 1 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 5 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
+			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
 		fi
 		nmcli device disconnect wlan0 > /dev/null 2>&1 || true
 		IPERF_WIRELESS_RESULT_SUCCESS=`echo "$IPERF_WIRELESS_RESULT" | grep ^20 || true`

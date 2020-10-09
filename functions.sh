@@ -84,11 +84,11 @@ RPI_getMinNetworkSpeed(){
 			;;
 		3BP)
 			WIRED_SPEED_MIN=250
-			WIRELESS_SPEED_MIN=50
+			WIRELESS_SPEED_MIN=40
 			;;
 		4B)
 			WIRED_SPEED_MIN=750
-			WIRELESS_SPEED_MIN=50
+			WIRELESS_SPEED_MIN=40
 			;;
 		*)
 			echo "Unknown Pi Version." >&2
