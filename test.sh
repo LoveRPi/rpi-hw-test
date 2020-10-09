@@ -130,7 +130,7 @@ if [ -z "$IPERF_SPEED_LOW" ]; then
 fi
 
 echo -n "Ethernet: "
-
+ETH_FAIL=1
 ETH=$(RPI_getEthernet)
 if [ $? -eq 0 ]; then
 	echo -n "$ETH "
@@ -153,6 +153,7 @@ if [ $? -eq 0 ]; then
 			else
 				echo "${COLOR_RED}LOW ${IPERF_SPEED}Mb${COLOR_NO}"
 			fi
+			ETH_FAIL=0
 		fi
 	else
 		ETH_LINK=`cat /sys/class/net/e*/carrier`
@@ -169,6 +170,7 @@ if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
 fi
 
 echo -n "WiFi Signal: "
+WIFI_FAIL=1
 #nmcli radio wifi on > /dev/null 2>&1 || true
 WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\\*\?\s*$WIFI_NAME\s" || true`"
 if [ -z "$WIFI_NETS" ]; then
@@ -207,6 +209,7 @@ else
 			else
 				echo "${COLOR_RED}LOW ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
 			fi
+			WIFI_FAIL=0
 		fi
 	fi
 	nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
@@ -228,9 +231,22 @@ if [ "$PI_VER" = "4B" ]; then
 fi
 
 if [ ! -z "$REPORT_IP" ]; then
-	nmcli device connect $ETH > /dev/null 2>&1 || true
-	ETH_STATE=$(cat /sys/class/net/e*/operstate)
-	if [ "$ETH_STATE" = "up" ]; then
+	SEND_REPORT=0
+	if [ $ETH_FAIL -eq 0 ]; then
+		nmcli device connect $ETH > /dev/null 2>&1 || true
+		ETH_STATE=$(cat /sys/class/net/e*/operstate)
+		if [ "$ETH_STATE" = "up" ]; then
+			SEND_REPORT=1
+		fi
+	elif [ $WIFI_FAIL -eq 0 ]; then
+		nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
+		WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
+		WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
+		if [ ! -z "$WIFI_STATE" ]; then
+			SEND_REPORT=1
+		fi
+	fi
+	if [ "$SEND_REPORT" -eq 1 ]; then
 		echo -n "Sending Report: $REPORT_IP "
 		CURL_REPORT=$(
 		curl -X POST -s -f http://$REPORT_IP/raspberry-pi/ \
@@ -254,9 +270,13 @@ if [ ! -z "$REPORT_IP" ]; then
 			echo "${COLOR_RED}${CURL_REPORT}${COLOR_NO}"
 		fi
 	else
-		echo "Sending Report: ${COLOR_RED}No ethernet connectivity.${COLOR_NO}"
+		echo "Sending Report: ${COLOR_RED}No connectivity.${COLOR_NO}"
 	fi
-	nmcli device disconnect $ETH > /dev/null 2>&1 || true
+	if [ $ETH_FAIL -eq 0 ]; then
+		nmcli device disconnect $ETH > /dev/null 2>&1 || true
+	elif [ $WIFI_FAIL -eq 0 ]; then
+		nmcli device disconnect wlan0 > /dev/null 2>&1 || true
+	fi
 fi
 
 while true; do
