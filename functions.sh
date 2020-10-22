@@ -22,6 +22,10 @@ RPI_getVersion(){
 			PI_VERSION=3BP
 			PI_VERSION_TEXT="Raspberry Pi 3 Model B+ 1.3 Manufactured by Sony UK"
 			;;
+		2a020d3)
+			PI_VERSION=3BP
+			PI_VERSION_TEXT="Raspberry Pi 3 Model B+ 1.3 Manufactured by Sony UK (Overclocked)"
+			;;
 		a02082)
 			PI_VERSION=3B
 			PI_VERSION_TEXT="Raspberry Pi 3 Model B 1.2 Manufactured by Sony UK"
