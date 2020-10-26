@@ -35,6 +35,10 @@ RPI_getVersion(){
 			PI_VERSION=3B
 			PI_VERSION_TEXT="Raspberry Pi 3 Model B 1.2 Manufactured by Embest"
 			;;
+		2a22082)
+			PI_VERSION=3B
+			PI_VERSION_TEXT="Raspberry Pi 3 Model B 1.2 Manufactured by Embest (Overclocked)"
+			;;
 		a22083)
 			PI_VERSION=3B
 			PI_VERSION_TEXT="Raspberry Pi 3 Model B 1.3 Manufactured by Embest"
@@ -83,7 +87,7 @@ RPI_getMinNetworkSpeed(){
 	fi
 	case $1 in
 		3B)
-			WIRED_SPEED_MIN=90
+			WIRED_SPEED_MIN=80
 			WIRELESS_SPEED_MIN=25
 			;;
 		3BP)
