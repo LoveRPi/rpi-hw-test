@@ -170,51 +170,56 @@ if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
 fi
 
 echo -n "WiFi Signal: "
-iw wlan0 set power_save off
+WIFI_DEV=$(iw list)
 WIFI_FAIL=1
-#nmcli radio wifi on > /dev/null 2>&1 || true
-WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\\*\?\s*$WIFI_NAME\s" || true`"
-if [ -z "$WIFI_NETS" ]; then
-	echo "${COLOR_RED}NO WIRELESS NET${COLOR_NO}"
+if [ -z "$WIFI_DEV" ]; then
+	echo "${COLOR_RED}NO WIRELESS DEV${COLOR_NO}"
 else
-	echo -n "${COLOR_GREEN}OK${COLOR_NO} "
-	WIFI_CONNECTION=$(echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-)
-	echo "$WIFI_CONNECTION"
-	echo -n "WiFi: "
-	nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
-	nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
-	WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
-	WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
-	#WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2- -d ' '`"
-	if [ -z "$WIFI_STATE" ]; then
-		echo "${COLOR_RED}NO WIRELESS CONNECTION${COLOR_NO}"
+	iw wlan0 set power_save off
+	#nmcli radio wifi on > /dev/null 2>&1 || true
+	WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\\*\?\s*$WIFI_NAME\s" || true`"
+	if [ -z "$WIFI_NETS" ]; then
+		echo "${COLOR_RED}NO WIRELESS NET${COLOR_NO}"
 	else
-		WIFI_IPV4="`echo "$WIFI_STATUS" | grep "IP4.ADDRESS" | tr -s ' ' | cut -f 2 -d ' '`"
-		if [ ! -z "$ETH" ]; then
-			nmcli device disconnect $ETH > /dev/null 2>&1 || true
-		fi
-		sleep 5
-		if [ -z "$IPERF_PORT" ]; then
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP 2> /dev/null || true`
+		echo -n "${COLOR_GREEN}OK${COLOR_NO} "
+		WIFI_CONNECTION=$(echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-)
+		echo "$WIFI_CONNECTION"
+		echo -n "WiFi: "
+		nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
+		nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
+		WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
+		WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
+		#WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2- -d ' '`"
+		if [ -z "$WIFI_STATE" ]; then
+			echo "${COLOR_RED}NO WIRELESS CONNECTION${COLOR_NO}"
 		else
-			IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
-		fi
-		nmcli device disconnect wlan0 > /dev/null 2>&1 || true
-		IPERF_WIRELESS_RESULT_SUCCESS=`echo "$IPERF_WIRELESS_RESULT" | grep ^20 || true`
-		if [ -z "$IPERF_WIRELESS_RESULT_SUCCESS" ]; then
-			echo "${COLOR_RED}IPERF FAILED${COLOR_NO}"
-		else
-			IPERF_WIRELESS_SPEED=`echo "$IPERF_WIRELESS_RESULT" | cut -f 9 -d ,`
-			IPERF_WIRELESS_SPEED=$((IPERF_WIRELESS_SPEED/1024/1024))
-			if [ $IPERF_WIRELESS_SPEED -gt $IPERF_WIRELESS_SPEED_LOW ]; then
-				echo "${COLOR_GREEN}OK ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
-			else
-				echo "${COLOR_RED}LOW ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
+			WIFI_IPV4="`echo "$WIFI_STATUS" | grep "IP4.ADDRESS" | tr -s ' ' | cut -f 2 -d ' '`"
+			if [ ! -z "$ETH" ]; then
+				nmcli device disconnect $ETH > /dev/null 2>&1 || true
 			fi
-			WIFI_FAIL=0
+			sleep 5
+			if [ -z "$IPERF_PORT" ]; then
+				IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP 2> /dev/null || true`
+			else
+				IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
+			fi
+			nmcli device disconnect wlan0 > /dev/null 2>&1 || true
+			IPERF_WIRELESS_RESULT_SUCCESS=`echo "$IPERF_WIRELESS_RESULT" | grep ^20 || true`
+			if [ -z "$IPERF_WIRELESS_RESULT_SUCCESS" ]; then
+				echo "${COLOR_RED}IPERF FAILED${COLOR_NO}"
+			else
+				IPERF_WIRELESS_SPEED=`echo "$IPERF_WIRELESS_RESULT" | cut -f 9 -d ,`
+				IPERF_WIRELESS_SPEED=$((IPERF_WIRELESS_SPEED/1024/1024))
+				if [ $IPERF_WIRELESS_SPEED -gt $IPERF_WIRELESS_SPEED_LOW ]; then
+				echo "${COLOR_GREEN}OK ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
+				else
+					echo "${COLOR_RED}LOW ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
+				fi
+				WIFI_FAIL=0
+			fi
 		fi
+		nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
 	fi
-	nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
 fi
 
 if [ "$PI_VER" = "4B" ]; then
