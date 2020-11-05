@@ -111,6 +111,22 @@ fi
 pkill cpuburn-a53
 trap - EXIT
 
+if [ ! -z "$POE" ]; then
+
+### VOLTAGE ###
+VOLTAGE_STATUS_PREV=$(RPI_getVoltageStatus 1)
+VOLTAGE_STATUS_CUR=$(RPI_getVoltageStatus)
+
+if [ $VOLTAGE_STATUS_CUR -ne 0 ]; then
+	echo "Voltage: ${COLOR_RED}LOW${COLOR_NO}"
+elif [ $VOLTAGE_STATUS_PREV -ne 0 ]; then
+	echo "Voltage: ${COLOR_RED}LOW PREV${COLOR_NO}"
+else
+	echo "Voltage: ${COLOR_GREEN}OK${COLOR_NO}"
+fi
+
+else
+
 echo -n "HDMI: "
 HDMI_MODES=$(RPI_getHDMIModes $PI_VER)
 HDMI_MODE_TARGET=1920x1080
@@ -290,6 +306,8 @@ if [ ! -z "$REPORT_IP" ]; then
 	elif [ $WIFI_FAIL -eq 0 ]; then
 		nmcli device disconnect wlan0 > /dev/null 2>&1 || true
 	fi
+fi
+
 fi
 
 while true; do
