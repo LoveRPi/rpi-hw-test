@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#set -x
 SOURCE_DIR=$(readlink -f $(dirname ${BASH_SOURCE[0]}))
 cd $SOURCE_DIR
 
@@ -49,9 +49,9 @@ trap finish EXIT
 
 ### REVISION ###
 COLOR_NEXT="$COLOR_GREEN"
-PI_REV=`grep Revision /proc/cpuinfo | cut -f 2 -d ' '`
-PI_VER=$(RPI_getVersion $PI_REV)
-PI_VER_TEXT=$(RPI_getVersion $PI_REV 1)
+PI_REV="$(tr -d '\0' < /proc/device-tree/model)"
+PI_VER=$(RPI_getVersion "$PI_REV")
+PI_VER_TEXT=$(RPI_getVersion "$PI_REV" 1)
 if [ $? -ne 0 ]; then
 	COLOR_NEXT="$COLOR_RED"
 fi
@@ -80,16 +80,16 @@ fi
 echo "Serial Number: ${COLOR_NEXT}${PI_SERIAL}${COLOR_NO}"
 
 ### VOLTAGE ###
-VOLTAGE_STATUS_PREV=$(RPI_getVoltageStatus 1)
-VOLTAGE_STATUS_CUR=$(RPI_getVoltageStatus)
+#VOLTAGE_STATUS_PREV=$(RPI_getVoltageStatus 1)
+#VOLTAGE_STATUS_CUR=$(RPI_getVoltageStatus)
 
-if [ $VOLTAGE_STATUS_CUR -ne 0 ]; then
-	echo "Voltage: ${COLOR_RED}LOW${COLOR_NO}"
-elif [ $VOLTAGE_STATUS_PREV -ne 0 ]; then
-	echo "Voltage: ${COLOR_RED}LOW PREV${COLOR_NO}"
-else
-	echo "Voltage: ${COLOR_GREEN}OK${COLOR_NO}"
-fi
+#if [ $VOLTAGE_STATUS_CUR -ne 0 ]; then
+#	echo "Voltage: ${COLOR_RED}LOW${COLOR_NO}"
+#elif [ $VOLTAGE_STATUS_PREV -ne 0 ]; then
+#	echo "Voltage: ${COLOR_RED}LOW PREV${COLOR_NO}"
+#else
+#	echo "Voltage: ${COLOR_GREEN}OK${COLOR_NO}"
+#fi
 
 bin/cpuburn-a53 &
 
@@ -111,27 +111,27 @@ fi
 pkill cpuburn-a53
 trap - EXIT
 
-if [ ! -z "$POE" ]; then
+#if [ ! -z "$POE" ]; then
 
 ### VOLTAGE ###
-VOLTAGE_STATUS_PREV=$(RPI_getVoltageStatus 1)
-VOLTAGE_STATUS_CUR=$(RPI_getVoltageStatus)
+#VOLTAGE_STATUS_PREV=$(RPI_getVoltageStatus 1)
+#VOLTAGE_STATUS_CUR=$(RPI_getVoltageStatus)
 
-if [ $VOLTAGE_STATUS_CUR -ne 0 ]; then
-	echo "Voltage: ${COLOR_RED}LOW${COLOR_NO}"
-elif [ $VOLTAGE_STATUS_PREV -ne 0 ]; then
-	echo "Voltage: ${COLOR_RED}LOW PREV${COLOR_NO}"
-else
-	echo "Voltage: ${COLOR_GREEN}OK${COLOR_NO}"
-fi
-
-else
+#if [ $VOLTAGE_STATUS_CUR -ne 0 ]; then
+#	echo "Voltage: ${COLOR_RED}LOW${COLOR_NO}"
+#elif [ $VOLTAGE_STATUS_PREV -ne 0 ]; then
+#	echo "Voltage: ${COLOR_RED}LOW PREV${COLOR_NO}"
+#else
+#	echo "Voltage: ${COLOR_GREEN}OK${COLOR_NO}"
+#fi
+	:
+#else
 
 echo -n "HDMI: "
 HDMI_MODES=$(RPI_getHDMIModes $PI_VER)
 HDMI_MODE_TARGET=1920x1080
-if [ "$PI_VER" = "4B" ]; then
-	HDMI_MODE_TARGET=3840x2160
+if [ "$PI_VER" = "roc-rk3328-cc" ]; then
+	HDMI_MODE_TARGET=1920x1080
 fi
 HDMI_MODE_TARGET=$(echo "$HDMI_MODES" | grep $HDMI_MODE_TARGET | head -n 1)
 if [ -z "$HDMI_MODE_TARGET" ]; then
@@ -181,64 +181,64 @@ if [ $? -eq 0 ]; then
 	fi
 fi
 
-if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
-	IPERF_WIRELESS_SPEED_LOW=$(RPI_getMinNetworkSpeed $PI_VER 1)
-fi
+#if [ -z "$IPERF_WIRELESS_SPEED_LOW" ]; then
+#	IPERF_WIRELESS_SPEED_LOW=$(RPI_getMinNetworkSpeed $PI_VER 1)
+#fi
 
-echo -n "WiFi Signal: "
-WIFI_DEV=$(iw list)
-WIFI_FAIL=1
-if [ -z "$WIFI_DEV" ]; then
-	echo "${COLOR_RED}NO WIRELESS DEV${COLOR_NO}"
-else
-	iw wlan0 set power_save off
-	#nmcli radio wifi on > /dev/null 2>&1 || true
-	WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\\*\?\s*$WIFI_NAME\s" || true`"
-	if [ -z "$WIFI_NETS" ]; then
-		echo "${COLOR_RED}NO WIRELESS NET${COLOR_NO}"
-	else
-		echo -n "${COLOR_GREEN}OK${COLOR_NO} "
-		WIFI_CONNECTION=$(echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-)
-		echo "$WIFI_CONNECTION"
-		echo -n "WiFi: "
-		nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
-		nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
-		WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
-		WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
-		#WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2- -d ' '`"
-		if [ -z "$WIFI_STATE" ]; then
-			echo "${COLOR_RED}NO WIRELESS CONNECTION${COLOR_NO}"
-		else
-			WIFI_IPV4="`echo "$WIFI_STATUS" | grep "IP4.ADDRESS" | tr -s ' ' | cut -f 2 -d ' '`"
-			if [ ! -z "$ETH" ]; then
-				nmcli device disconnect $ETH > /dev/null 2>&1 || true
-			fi
-			sleep 5
-			if [ -z "$IPERF_PORT" ]; then
-				IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP 2> /dev/null || true`
-			else
-				IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
-			fi
-			nmcli device disconnect wlan0 > /dev/null 2>&1 || true
-			IPERF_WIRELESS_RESULT_SUCCESS=`echo "$IPERF_WIRELESS_RESULT" | grep ^20 || true`
-			if [ -z "$IPERF_WIRELESS_RESULT_SUCCESS" ]; then
-				echo "${COLOR_RED}IPERF FAILED${COLOR_NO}"
-			else
-				IPERF_WIRELESS_SPEED=`echo "$IPERF_WIRELESS_RESULT" | cut -f 9 -d ,`
-				IPERF_WIRELESS_SPEED=$((IPERF_WIRELESS_SPEED/1024/1024))
-				if [ $IPERF_WIRELESS_SPEED -gt $IPERF_WIRELESS_SPEED_LOW ]; then
-				echo "${COLOR_GREEN}OK ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
-				else
-					echo "${COLOR_RED}LOW ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
-				fi
-				WIFI_FAIL=0
-			fi
-		fi
-		nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
-	fi
-fi
+#echo -n "WiFi Signal: "
+#WIFI_DEV=$(iw list)
+#WIFI_FAIL=1
+#if [ -z "$WIFI_DEV" ]; then
+#	echo "${COLOR_RED}NO WIRELESS DEV${COLOR_NO}"
+#else
+#	iw wlan0 set power_save off
+#	#nmcli radio wifi on > /dev/null 2>&1 || true
+#	WIFI_NETS="`nmcli device wifi list 2> /dev/null | grep "^\\*\?\s*$WIFI_NAME\s" || true`"
+#	if [ -z "$WIFI_NETS" ]; then
+#		echo "${COLOR_RED}NO WIRELESS NET${COLOR_NO}"
+#	else
+#		echo -n "${COLOR_GREEN}OK${COLOR_NO} "
+#		WIFI_CONNECTION=$(echo "$WIFI_NETS" | head -n 1 | tr -s ' ' | cut -d " " -f 3,5-)
+#		echo "$WIFI_CONNECTION"
+#		echo -n "WiFi: "
+#		nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
+#		nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
+#		WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
+#		WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
+#		#WIFI_CONNECTION="`echo "$WIFI_STATUS" | grep "GENERAL.CONNECTION:" | tr -s ' ' | cut -f 2- -d ' '`"
+#		if [ -z "$WIFI_STATE" ]; then
+#			echo "${COLOR_RED}NO WIRELESS CONNECTION${COLOR_NO}"
+#		else
+#			WIFI_IPV4="`echo "$WIFI_STATUS" | grep "IP4.ADDRESS" | tr -s ' ' | cut -f 2 -d ' '`"
+#			if [ ! -z "$ETH" ]; then
+#				nmcli device disconnect $ETH > /dev/null 2>&1 || true
+#			fi
+#			sleep 5
+#			if [ -z "$IPERF_PORT" ]; then
+#				IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP 2> /dev/null || true`
+#			else
+#				IPERF_WIRELESS_RESULT=`iperf -x CMSV -y C -t 3 -c $IPERF_IP -p $IPERF_PORT 2> /dev/null || true`
+#			fi
+#			nmcli device disconnect wlan0 > /dev/null 2>&1 || true
+#			IPERF_WIRELESS_RESULT_SUCCESS=`echo "$IPERF_WIRELESS_RESULT" | grep ^20 || true`
+#			if [ -z "$IPERF_WIRELESS_RESULT_SUCCESS" ]; then
+#				echo "${COLOR_RED}IPERF FAILED${COLOR_NO}"
+#			else
+#				IPERF_WIRELESS_SPEED=`echo "$IPERF_WIRELESS_RESULT" | cut -f 9 -d ,`
+#				IPERF_WIRELESS_SPEED=$((IPERF_WIRELESS_SPEED/1024/1024))
+#				if [ $IPERF_WIRELESS_SPEED -gt $IPERF_WIRELESS_SPEED_LOW ]; then
+#				echo "${COLOR_GREEN}OK ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
+#				else
+#					echo "${COLOR_RED}LOW ${IPERF_WIRELESS_SPEED}Mb${COLOR_NO}"
+#				fi
+#				WIFI_FAIL=0
+#			fi
+#		fi
+#		nmcli connection show 2> /dev/null | grep -o "^$WIFI_NAME \([0-9]*\)\?" | sed "s/\\s\\+\$//" | xargs -rd "\n" nmcli connection delete id > /dev/null 2>&1 || true
+#	fi
+#fi
 
-if [ "$PI_VER" = "4B" ]; then
+if [ "$PI_VER" = "roc-rk3328-cc" ]; then
 	echo -n "USB Device 1: "
 	if [ -b /dev/sda1 ]; then
 		echo "${COLOR_GREEN}OK${COLOR_NO}"
@@ -264,14 +264,14 @@ if [ ! -z "$REPORT_IP" ]; then
 		if [ "$ETH_STATE" = "up" ]; then
 			SEND_REPORT=1
 		fi
-	elif [ $WIFI_FAIL -eq 0 ]; then
-		sleep 3
-		nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
-		WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
-		WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
-		if [ ! -z "$WIFI_STATE" ]; then
-			SEND_REPORT=1
-		fi
+#	elif [ $WIFI_FAIL -eq 0 ]; then
+#		sleep 3
+#		nmcli device wifi connect "$WIFI_NAME" password "$WIFI_PASS" > /dev/null 2>&1 || true
+#		WIFI_STATUS="`nmcli device show wlan0 2> /dev/null || true`"
+#		WIFI_STATE="`echo "$WIFI_STATUS" | grep "GENERAL.STATE:" | tr -s ' ' | cut -f 2 -d ' ' | grep ^100 || true`"
+#		if [ ! -z "$WIFI_STATE" ]; then
+#			SEND_REPORT=1
+#		fi
 	fi
 	if [ "$SEND_REPORT" -eq 1 ]; then
 		echo -n "Sending Report: $REPORT_IP "
@@ -283,12 +283,12 @@ if [ ! -z "$REPORT_IP" ]; then
 			-d "upload[]=$PI_VER_TEXT" \
 			-d "upload[]=$PI_MEM" \
 			-d "upload[]=$PI_SERIAL" \
-			-d "upload[]=$VOLTAGE_STATUS_PREV" \
-			-d "upload[]=$VOLTAGE_STATUS_CUR" \
+			-d "upload[]=" \
+			-d "upload[]=" \
 			-d "upload[]=$HDMI_MODE_TARGET" \
 			-d "upload[]=$IPERF_SPEED" \
-			-d "upload[]=$IPERF_WIRELESS_SPEED" \
-			-d "upload[]=$WIFI_CONNECTION" \
+			-d "upload[]=" \
+			-d "upload[]=" \
 			-d "upload[]=$USB_0" \
 			-d "upload[]=$USB_1"
 #			-d "upload[]=" \
@@ -303,12 +303,12 @@ if [ ! -z "$REPORT_IP" ]; then
 	fi
 	if [ $ETH_FAIL -eq 0 ]; then
 		nmcli device disconnect $ETH > /dev/null 2>&1 || true
-	elif [ $WIFI_FAIL -eq 0 ]; then
-		nmcli device disconnect wlan0 > /dev/null 2>&1 || true
+#	elif [ $WIFI_FAIL -eq 0 ]; then
+#		nmcli device disconnect wlan0 > /dev/null 2>&1 || true
 	fi
 fi
 
-fi
+#fi
 
 while true; do
 	read -n 1 -p "Press s to shutdown. Press r to reboot. Press t to re-test. Press c to go to configuration." KEY
