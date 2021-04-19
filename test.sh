@@ -111,7 +111,7 @@ fi
 pkill cpuburn-a53
 trap - EXIT
 
-if [ ! -z "$POE" ]; then
+if [ ! -z "$POE" ] && [ "$POE" != "0" ]; then
 
 ### VOLTAGE ###
 VOLTAGE_STATUS_PREV=$(RPI_getVoltageStatus 1)
