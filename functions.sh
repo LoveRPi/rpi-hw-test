@@ -6,6 +6,10 @@ RPI_getVersion(){
 		return 1
 	fi
 	case "$1" in
+		c03130)
+			PI_VERSION=400
+			PI_VERSION_TEXT="Raspberry Pi 400 1.0 Manufactured by Sony UK"
+			;;
 		a03111 | b03111 | c03111)
 			PI_VERSION=4B
 			PI_VERSION_TEXT="Raspberry Pi 4 Model B 1.1 Manufactured by Sony UK"
@@ -14,7 +18,7 @@ RPI_getVersion(){
 			PI_VERSION=4B
 			PI_VERSION_TEXT="Raspberry Pi 4 Model B 1.2 Manufactured by Sony UK"
 			;;
-		d03114)
+		c03114 | d03114)
 			PI_VERSION=4B
 			PI_VERSION_TEXT="Raspberry Pi 4 Model B 1.4 Manufactured by Sony UK"
 			;;
@@ -54,7 +58,7 @@ RPI_getVersion(){
 			return 1
 			;;
 		*)
-			echo "Unable to determine Raspberry Pi code." >&2
+			echo "Unable to determine Raspberry Pi from code $1." >&2
 			return 1
 			;;
 	esac
